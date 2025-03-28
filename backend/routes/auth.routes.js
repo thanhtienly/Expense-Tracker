@@ -1,6 +1,9 @@
 const { Router } = require("express");
 const AuthController = require("../controllers/auth.controller");
-const { authorizedTokenMiddleware } = require("../middlewares/auth.middleware");
+const {
+  authorizedTokenMiddleware,
+  isValidTokenWithoutExpire,
+} = require("../middlewares/auth.middleware");
 const router = Router();
 
 router.get("/oauth", AuthController.generateOAuthURL);
@@ -10,7 +13,7 @@ router.post(
   authorizedTokenMiddleware,
   AuthController.validateUser
 );
-router.post("/log-out", authorizedTokenMiddleware, AuthController.logOut);
+router.post("/log-out", isValidTokenWithoutExpire, AuthController.logOut);
 router.post("/token", AuthController.renewAccessToken);
 
 module.exports = router;

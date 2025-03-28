@@ -156,7 +156,6 @@ const logOut = async (req, res) => {
 
   try {
     oauth2Client.revokeToken(refreshToken);
-    var tokens = await tokenService.deleteToken(refreshToken);
   } catch (error) {
     console.log("Invalid OAuth Refresh Token");
   }
