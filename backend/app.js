@@ -10,6 +10,8 @@ const { User } = require("./models/Users");
 const { Token } = require("./models/Token");
 const { Transaction } = require("./models/Transaction");
 const { Label } = require("./models/Label");
+const { Balance } = require("./models/Balance");
+const { Wallet } = require("./models/Wallet");
 
 const authRoute = require("./routes/auth.routes");
 const transactionRoute = require("./routes/transaction.routes");

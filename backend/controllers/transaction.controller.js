@@ -4,6 +4,8 @@ const crypto = require("crypto");
 const mailService = require("../services/gmail.service");
 const transactionService = require("../services/transaction.service");
 const { sequelize } = require("../database/config");
+const walletService = require("../services/wallet.service");
+const balanceService = require("../services/balance.service");
 
 const oauth2Client = new google.auth.OAuth2({
   clientId: process.env.GOOGLE_CLIENT_ID,
@@ -37,22 +39,102 @@ const fetchTransactions = async (req, res) => {
     gmail
   );
 
+  var userId = req["user"]["userId"];
+
+  /* Add transactionId to transactions data */
   transactions = transactions.map((transaction) => {
     return {
       ...transaction,
-      userId: req["user"]["userId"],
+      userId: userId,
       id: crypto.randomUUID(),
     };
   });
 
+  /* Calculate monthly balance changed */
+  var balanceDict = {};
+  transactions.forEach((transaction) => {
+    var month = new Date(transaction["date"]).getMonth() + 1;
+    var year = new Date(transaction["date"]).getFullYear();
+    var key = `${month}.${year}`;
+
+    if (!balanceDict[key]) {
+      balanceDict[key] = {
+        month: month,
+        year: year,
+        amount: 0,
+      };
+    }
+
+    if (transaction["type"] == "cash-in") {
+      balanceDict[key]["amount"] += transaction["amount"];
+    } else if (transaction["type"] == "cash-out") {
+      balanceDict[key]["amount"] -= transaction["amount"];
+    }
+  });
+
+  var balanceChangedArray = Object.values(balanceDict);
+
+  /* Create user's wallet if not exist */
+  var wallet = await walletService.createBankWallet(userId);
+
   let sqlTransaction = await sequelize.transaction();
+
   try {
-    transactions = await transactionService.createManyTransaction(transactions);
+    /* Insert new transaction */
+    transactions = await transactionService.createManyTransaction(
+      transactions,
+      sqlTransaction
+    );
+
+    /* Update or Create monthly balance */
+    await Promise.all(
+      balanceChangedArray.map((balanceChanged) => {
+        return balanceService.upsert(
+          userId,
+          wallet["id"],
+          balanceChanged["month"],
+          balanceChanged["year"],
+          balanceChanged["amount"],
+          sqlTransaction
+        );
+      })
+    );
+
+    /* Calculate user's wallet balance from monthly balance */
+    const monthlyBalance = await balanceService.getMonthlyBalance(
+      wallet["id"],
+      sqlTransaction
+    );
+
+    var total = 0;
+    var lastUpdatedMonth = monthlyBalance[0]["month"];
+    var lastUpdatedYear = monthlyBalance[0]["year"];
+
+    monthlyBalance.forEach((balance) => {
+      total += balance["amount"];
+    });
+
+    /* Update user's wallet balance */
+    await walletService.updateWalletBalance(
+      wallet["id"],
+      total,
+      lastUpdatedMonth,
+      lastUpdatedYear,
+      sqlTransaction
+    );
+
+    /* Mark email message as read */
     await mailService.markMessageAsDone(gmail, messageIds);
+
     sqlTransaction.commit();
   } catch (error) {
+    console.log(error);
     sqlTransaction.rollback();
   }
+
+  // await mailService.markMessageAsDone(gmail, messageIds);
+
+  // console.log("Mark Message As Done Successfully");
 
   res.json({ message: "Success", data: transactions });
 };

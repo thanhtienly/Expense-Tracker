@@ -94,11 +94,6 @@ const generateToken = async (req, res) => {
     user["email"]
   );
 
-  console.log({
-    accessToken: accessToken,
-    refreshToken: refreshToken,
-  });
-
   res.json({
     message: "Success",
     data: {
