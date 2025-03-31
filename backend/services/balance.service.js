@@ -18,7 +18,8 @@ const upsert = async (
   walletId,
   month,
   year,
-  amount,
+  cashIn,
+  cashOut,
   sqlTransaction
 ) => {
   const balance = await findUserBalanceByMonthYear(walletId, month, year);
@@ -29,7 +30,8 @@ const upsert = async (
         id: crypto.randomUUID(),
         userId: userId,
         walletId: walletId,
-        amount: amount,
+        cashIn: cashIn,
+        cashOut: cashOut,
         month: month,
         year: year,
       },
@@ -39,7 +41,8 @@ const upsert = async (
 
   return await Balance.update(
     {
-      amount: balance.amount + amount,
+      cashIn: balance.cashIn + cashIn,
+      cashOut: balance.cashOut + cashOut,
     },
     {
       where: {
@@ -69,4 +72,4 @@ const getMonthlyBalance = async (walletId, sqlTransaction) => {
   return monthlyBalance;
 };
 
-module.exports = { upsert, getMonthlyBalance };
+module.exports = { findUserBalanceByMonthYear, upsert, getMonthlyBalance };

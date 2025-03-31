@@ -19,7 +19,11 @@ const Balance = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
     },
-    amount: {
+    cashIn: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+    },
+    cashOut: {
       type: DataTypes.BIGINT,
       allowNull: true,
     },

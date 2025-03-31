@@ -27,7 +27,7 @@ const createBankWallet = async (userId) => {
   return wallet;
 };
 
-const updateWalletBalance = async (
+const updateBankWalletBalance = async (
   walletId,
   walletBalance,
   lastMonth,
@@ -49,4 +49,4 @@ const updateWalletBalance = async (
   );
 };
 
-module.exports = { createBankWallet, updateWalletBalance };
+module.exports = { findBankWallet, createBankWallet, updateBankWalletBalance };

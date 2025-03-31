@@ -15,17 +15,19 @@ const { Wallet } = require("./models/Wallet");
 
 const authRoute = require("./routes/auth.routes");
 const transactionRoute = require("./routes/transaction.routes");
+const balanceRoute = require("./routes/balance.routes");
 sequelize.sync();
 
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_URL,
   })
 );
 
 app.use("/auth", authRoute);
 app.use("/transactions", transactionRoute);
+app.use("/balance", balanceRoute);
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);

@@ -50,7 +50,7 @@ const fetchTransactions = async (req, res) => {
     };
   });
 
-  /* Calculate monthly balance changed */
+  /* Calculate monthly balance cashIn, cashOut */
   var balanceDict = {};
   transactions.forEach((transaction) => {
     var month = new Date(transaction["date"]).getMonth() + 1;
@@ -61,14 +61,15 @@ const fetchTransactions = async (req, res) => {
       balanceDict[key] = {
         month: month,
         year: year,
-        amount: 0,
+        cashIn: 0,
+        cashOut: 0,
       };
     }
 
     if (transaction["type"] == "cash-in") {
-      balanceDict[key]["amount"] += transaction["amount"];
+      balanceDict[key]["cashIn"] += transaction["amount"];
     } else if (transaction["type"] == "cash-out") {
-      balanceDict[key]["amount"] -= transaction["amount"];
+      balanceDict[key]["cashOut"] += transaction["amount"];
     }
   });
 
@@ -94,7 +95,8 @@ const fetchTransactions = async (req, res) => {
           wallet["id"],
           balanceChanged["month"],
           balanceChanged["year"],
-          balanceChanged["amount"],
+          balanceChanged["cashIn"],
+          balanceChanged["cashOut"],
           sqlTransaction
         );
       })
@@ -111,11 +113,11 @@ const fetchTransactions = async (req, res) => {
     var lastUpdatedYear = monthlyBalance[0]["year"];
 
     monthlyBalance.forEach((balance) => {
-      total += balance["amount"];
+      total += balance["cashIn"] - balance["cashOut"];
     });
 
     /* Update user's wallet balance */
-    await walletService.updateWalletBalance(
+    await walletService.updateBankWalletBalance(
       wallet["id"],
       total,
       lastUpdatedMonth,
