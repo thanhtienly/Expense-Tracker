@@ -16,3 +16,22 @@ export async function createSession(accessToken: string, refreshToken: string) {
     path: "/",
   });
 }
+
+export async function getSession() {
+  const cookieStore = await cookies();
+
+  const accessToken: string = cookieStore.get("accessToken")?.value || "";
+  const refreshToken: string = cookieStore.get("refreshToken")?.value || "";
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+}
+
+export async function removeSession() {
+  const cookieStore = await cookies();
+
+  cookieStore.delete("accessToken");
+  cookieStore.delete("refreshToken");
+}
